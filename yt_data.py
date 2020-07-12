@@ -3,8 +3,14 @@ import json
 import os
 # import video_info
 
+# added from nlp_data
+
+from textblob import Textblob
+import nltk
+from nltk.tokenize import word_tokenize
+
 """This program is the backend of a desired chrome extension that scrapes
-youtube data using google's youtube Aplicaton Programming Interface (API)
+youtube data using google's youtube Applicaton Programming Interface (API)
 to display video information after a user types a text into the search box. 
 This extension provides information like comment sentiment, likes, and dislikes
 without clicking on the video to see that info"""
@@ -13,18 +19,11 @@ without clicking on the video to see that info"""
 # object of search results. Takes in search input and number of results to be analysed
 def get_search_outcome_ids(youtube, search_input, max_results):
     request = youtube.search().list(
-        part = 'snippet',
-        q= search_input,
+        part='snippet',
+        q=search_input,
         maxResults = max_results
     )
 
-<<<<<<< HEAD
-request = youtube.search().list(
-    part='snippet',
-    q='vanderbilt',
-    maxResults=100,
-)
-=======
     response = request.execute()
 
     # retrieve video ids from json/dictionary
@@ -33,33 +32,31 @@ request = youtube.search().list(
         vid_ids.append(item['id']['videoId'])
     
     return vid_ids
->>>>>>> b1bdf36121199c97782dcadeb3eb67c37c6c13da
 
-# takes the list of ids as param and accesse their stats to be displayed
+
+# takes the list of ids as param and accesses their stats to be displayed
 def get_video_stats(youtube, video_ids):
     stats_request = youtube.videos().list(
-        part = 'statistics',
-        id = video_ids
+        part='statistics',
+        id=video_ids
     )
 
-<<<<<<< HEAD
-print(response)
-=======
     stats_response = stats_request.execute()
 
-    vid_stats =[]
+    vid_stats = []
     for stat in stats_response['items']:
         vid_stats.append(stat['statistics'])
 
     return vid_stats
 
+
 # access the comment_threads data from api and appends each comment in a list
 def get_comment_threads(youtube, video_id, comments=[], token=""):
     results = youtube.commentThreads().list(
-        part = "snippet",
-        pageToken = token,
-        videoId = video_id,
-        textFormat = "plainText"
+        part="snippet",
+        pageToken=token,
+        videoId=video_id,
+        textFormat="plainText"
     ).execute()
 
     for item in results["items"]:
@@ -67,7 +64,8 @@ def get_comment_threads(youtube, video_id, comments=[], token=""):
         text = comment["snippet"]["textDisplay"]
         comments.append(text)
 
-    if "nextPageToken" in results: #wraps to next page if needed
+    # wraps to next page if needed
+    if "nextPageToken" in results:
         return get_comment_threads(youtube, video_id, comments, results["nextPageToken"])
     else:
         return comments
@@ -102,4 +100,4 @@ def main():
 
 if __name__ == '__main__':
     main()
->>>>>>> b1bdf36121199c97782dcadeb3eb67c37c6c13da
+

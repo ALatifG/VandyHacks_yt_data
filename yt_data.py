@@ -4,6 +4,10 @@ import os
 import httplib2
 import ssl
 import _ssl
+from textblob import TextBlob
+import nltk
+from nltk.tokenize import word_tokenize
+
 # import video_info
 
 """This program is the backend of a desired chrome extension that scrapes
@@ -65,10 +69,22 @@ def get_comment_threads(youtube, video_id, comments=[], token=""):
         return comments
 
 # writes the comments in a list to a .txt file for analysis
-# def write_comments_to_file(comments):
-    # TODO: first find a way to encode the comments so python understands all the characters
-    # with open('youtube_comments.txt', 'w') as filehandle:
-        #  filehandle.writelines("%s\n" % comment for comment in comments)
+def write_comments_to_file(comments):
+    # encodes text into utf-8 so python understands it and can write it to file
+    with open('youtube_comments.txt', 'w', encoding='utf-8') as filehandle:
+         filehandle.writelines("%s\n" % comment for comment in comments)
+
+def process_comments(youtube, comments):
+
+    #tokenize comments into single words
+    tokenized_sents = [word_tokenize(i) for i in comments]
+
+    # create a TextBlob object
+    obj = TextBlob(tokenized_sents)
+
+    sentiment = obj.sentiment.polarity
+
+    return sentiment
 
 def main():
     # gets the api key securely from a local computer
@@ -82,15 +98,19 @@ def main():
     video_ids = get_search_outcome_ids(youtube, search_text, max_results=20)
 
     video_stats = get_video_stats(youtube, video_ids)
-    print(video_ids)
-    print()
-    print(video_stats)
 
-    # for video in video_ids:
-    #     comments = get_comment_threads(youtube, video)
-    #     write_comments_to_file(comments)
-    # stats = videoInfo(3, 5, -1)
-    # stats.display_stats()
+    comments = get_comment_threads(youtube, video_ids[0])
+    likes = 0
+    dislikes = 0
+    for video in video_ids:
+        comments = get_comment_threads(youtube, video)
+        sentiment = process_comments(youtube, comments)
+        for stat in video_stats:
+            likes = stat['likeCount']
+            dislikes = stat['dislikeCount']
+        sentiment = process_comments(youtube, comments)
+        info = videoInfo(likes, dislikes, sentiment)
+        info.dislplay_stats()
 
 if __name__ == '__main__':
     main()

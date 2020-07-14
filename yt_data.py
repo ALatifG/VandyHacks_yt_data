@@ -7,14 +7,9 @@ import _ssl
 from textblob import TextBlob
 import nltk
 from nltk.tokenize import word_tokenize
+from video_info import *
 
-# import video_info
-
-# added from nlp_data
-
-from textblob import Textblob
-import nltk
-from nltk.tokenize import word_tokenize
+api_key = 'AIzaSyBfTDySVjzI9Mh8opXzF5Ls46GgO9Nz7v4'
 
 """This program is the backend of a desired chrome extension that scrapes
 youtube data using google's youtube Applicaton Programming Interface (API)
@@ -27,6 +22,7 @@ without clicking on the video to see that info"""
 def get_search_outcome_ids(youtube, search_input, max_results):
     request = youtube.search().list(
         part='snippet',
+
         q=search_input,
         maxResults = max_results
     )
@@ -86,10 +82,11 @@ def write_comments_to_file(comments):
 def process_comments(youtube, comments):
 
     #tokenize comments into single words
-    tokenized_sents = [word_tokenize(i) for i in comments]
+    #tokenized_sents = [word_tokenize(i) for i in comments]
+    str2 = " ".join(comments)
 
     # create a TextBlob object
-    obj = TextBlob(tokenized_sents)
+    obj = TextBlob(str2)
 
     sentiment = obj.sentiment.polarity
 
@@ -97,8 +94,6 @@ def process_comments(youtube, comments):
 
 def main():
     # gets the api key securely from a local computer
-    api_key = os.environ.get('API_KEY')
-
     # access the api using the key and version number
     youtube = build('youtube', 'v3', developerKey=api_key)
 
@@ -119,7 +114,7 @@ def main():
             dislikes = stat['dislikeCount']
         sentiment = process_comments(youtube, comments)
         info = videoInfo(likes, dislikes, sentiment)
-        info.dislplay_stats()
+        info.display_stats()
 
 if __name__ == '__main__':
     main()

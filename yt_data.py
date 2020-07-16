@@ -7,9 +7,11 @@ import _ssl
 from textblob import TextBlob
 import nltk
 from nltk.tokenize import word_tokenize
-from video_info import *
+# from video_info import *
 
-api_key = 'AIzaSyBfTDySVjzI9Mh8opXzF5Ls46GgO9Nz7v4'
+# api_key = 'AIzaSyBfTDySVjzI9Mh8opXzF5Ls46GgO9Nz7v4'
+# api_key = os.environ.get('API_KEY')
+
 
 """This program is the backend of a desired chrome extension that scrapes
 youtube data using google's youtube Applicaton Programming Interface (API)
@@ -32,16 +34,17 @@ def get_search_outcome_ids(youtube, search_input, max_results):
     # retrieve video ids from json/dictionary
     vid_ids = []
     for item in response['items']:
-        vid_ids.append(item['id']['videoId'])
+        if 'videoId' in item:
+            vid_ids.append(item['id']['videoId'])
     
     return vid_ids
 
 
 # takes the list of ids as param and accesses their stats to be displayed
-def get_video_stats(youtube, video_ids):
+def get_video_stats(youtube, video_id):
     stats_request = youtube.videos().list(
         part='statistics',
-        id=video_ids
+        id=video_id
     )
 
     stats_response = stats_request.execute()
@@ -49,6 +52,7 @@ def get_video_stats(youtube, video_ids):
     vid_stats = []
     for stat in stats_response['items']:
         vid_stats.append(stat['statistics'])
+    # vid_stat = stats_response['items']['statistics']
 
     return vid_stats
 
@@ -92,29 +96,46 @@ def process_comments(youtube, comments):
 
     return sentiment
 
+def display_info(likes, dislikes, sentiment):
+    print(likes, 'likes')
+    print(dislikes, 'dislikes')
+
+    if(sentiment > 0):
+        print("General positive sentiment")
+    elif(sentiment == 0):
+        print("General neutral sentiment")
+    else:
+        print("General Negative sentiment")
+
 def main():
     # gets the api key securely from a local computer
     # access the api using the key and version number
+    api_key = 'AIzaSyBCtVzJ4Y55mu1-WJf3uotea2tLP5oIhd4'
     youtube = build('youtube', 'v3', developerKey=api_key)
 
     # get input
     search_text = input("Input search text: ")
     video_ids = get_search_outcome_ids(youtube, search_text, max_results=20)
 
-    video_stats = get_video_stats(youtube, video_ids)
-
-    comments = get_comment_threads(youtube, video_ids[0])
     likes = 0
     dislikes = 0
-    for video in video_ids:
-        comments = get_comment_threads(youtube, video)
+    # info = videoInfo(0, 0, 0)
+    for video_id in video_ids:
+        comments = get_comment_threads(youtube, video_id)
         sentiment = process_comments(youtube, comments)
-        for stat in video_stats:
-            likes = stat['likeCount']
-            dislikes = stat['dislikeCount']
+        
+        video_stat = get_video_stats(youtube, video_id)
+        if 'likeCount' not in video_stat[0]:
+            likes = 0
+        else:
+            likes = int(video_stat[0]['likeCount'])
+        if 'dislikeCount' not in video_stat[0]:
+            dislikes = 0
+        else:
+            dislikes = int(video_stat[0]['dislikeCount'])
+
         sentiment = process_comments(youtube, comments)
-        info = videoInfo(likes, dislikes, sentiment)
-        info.display_stats()
+        display_info(likes, dislikes, sentiment)
 
 if __name__ == '__main__':
     main()
